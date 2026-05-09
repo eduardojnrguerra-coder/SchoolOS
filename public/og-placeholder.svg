@@ -1,0 +1,15 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#111C34"/>
+  <circle cx="1030" cy="130" r="220" fill="#F2C94C" opacity="0.18"/>
+  <circle cx="160" cy="520" r="260" fill="#68D391" opacity="0.12"/>
+  <rect x="90" y="90" width="1020" height="450" rx="44" fill="#F8FAFC"/>
+  <rect x="130" y="132" width="220" height="40" rx="20" fill="#111C34"/>
+  <rect x="130" y="218" width="292" height="118" rx="26" fill="#E6EEF8"/>
+  <rect x="454" y="218" width="292" height="118" rx="26" fill="#FFF4D6"/>
+  <rect x="778" y="218" width="292" height="118" rx="26" fill="#EAF8F1"/>
+  <rect x="130" y="374" width="600" height="104" rx="28" fill="#111C34"/>
+  <rect x="768" y="374" width="302" height="104" rx="28" fill="#E6EEF8"/>
+  <text x="130" y="166" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="24" font-weight="700">Pine X</text>
+  <text x="130" y="407" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="34" font-weight="700">School OS</text>
+  <text x="130" y="448" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="22">Premium operations for modern schools</text>
+</svg>
