@@ -2,7 +2,9 @@
 
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { useFiveMinuteSchoolDemo } from "@/components/demo/five-minute-school-demo";
 import { useToast } from "@/components/ui/toast-provider";
+import { dispatchSalesDemoAction, SalesDemoAction } from "@/lib/sales-demo";
 import { Bell, Bus, CheckCircle2, ClipboardPenLine, CreditCard, Megaphone, Route, ShieldCheck, UserMinus, Users } from "lucide-react";
 import { useState } from "react";
 
@@ -13,52 +15,44 @@ type DemoEvent = {
   tone: "info" | "success" | "warning" | "danger";
 };
 
-const walkthrough = [
-  "Dashboard overview",
-  "Learner profile",
-  "Attendance alert",
-  "Notice creation",
-  "Parent app notice",
-  "Fee balance",
-  "Consent form",
-  "Transport update",
-  "Aftercare pickup"
-];
+const walkthrough = ["Pulse", "Attendance", "Parent app", "Notices", "Consent", "Fees", "Transport", "Aftercare", "Summary"];
 
 const scenarios = [
-  { label: "Mark learner absent", icon: UserMinus, event: "Ariana Meyer marked absent", parentView: "Parent receives: Ariana Meyer was marked absent today. Please confirm if this is correct.", tone: "warning" as const },
-  { label: "Send urgent notice", icon: Megaphone, event: "Urgent notice queued", parentView: "Parent sees a high-priority notice at the top of the app feed.", tone: "danger" as const },
-  { label: "Create outing consent form", icon: ClipboardPenLine, event: "Outing consent created", parentView: "Parent action center shows: Sign form required.", tone: "warning" as const },
-  { label: "Upload parent proof of payment", icon: CreditCard, event: "Proof uploaded for review", parentView: "Parent sees proof status: Pending finance review.", tone: "info" as const },
-  { label: "Delay transport route", icon: Route, event: "North route delayed", parentView: "Parent transport screen shows a delay notice and route reassurance.", tone: "warning" as const },
-  { label: "Check learner into aftercare", icon: Users, event: "Learner checked into aftercare", parentView: "Parent receives: Your child has been checked into aftercare.", tone: "success" as const }
+  { label: "Mark learner absent", icon: UserMinus, action: "MARK_LEARNER_ABSENT" as SalesDemoAction, event: "Ariana Meyer marked absent", parentView: "Parent receives: Ariana Meyer was marked absent today. Please confirm if this is correct.", tone: "warning" as const },
+  { label: "Send urgent notice", icon: Megaphone, action: "SEND_URGENT_GRADE3_NOTICE" as SalesDemoAction, event: "Urgent Grade 3 notice queued", parentView: "Parent sees a high-priority notice at the top of the app feed.", tone: "danger" as const },
+  { label: "Create outing consent form", icon: ClipboardPenLine, action: "CREATE_OUTING_CONSENT_FORM" as SalesDemoAction, event: "Outing consent created", parentView: "Parent action center shows: Sign form required.", tone: "warning" as const },
+  { label: "Upload parent proof of payment", icon: CreditCard, action: "UPLOAD_PROOF_OF_PAYMENT" as SalesDemoAction, event: "Proof uploaded for review", parentView: "Parent sees proof status: Pending finance review.", tone: "info" as const },
+  { label: "Delay transport route", icon: Route, action: "MARK_TRANSPORT_DELAYED" as SalesDemoAction, event: "North route delayed", parentView: "Parent transport screen shows a delay notice and route reassurance.", tone: "warning" as const },
+  { label: "Check learner into aftercare", icon: Users, action: "CHECK_LEARNER_INTO_AFTERCARE" as SalesDemoAction, event: "Learner checked into aftercare", parentView: "Parent receives: Your child has been checked into aftercare.", tone: "success" as const }
 ];
 
 export function GuidedDemo() {
   const [step, setStep] = useState(0);
   const [events, setEvents] = useState<DemoEvent[]>([]);
   const { showToast } = useToast();
+  const { startDemo, resetDemo } = useFiveMinuteSchoolDemo();
 
-  function startDemo() {
+  function startLocalDemo() {
     setStep(0);
-    showToast({ title: "Guided demo started", description: "Walk through operations and the matching parent experience.", tone: "success" });
+    startDemo();
   }
 
   function runScenario(scenario: (typeof scenarios)[number]) {
+    dispatchSalesDemoAction(scenario.action);
     const event = { id: `demo_event_${Date.now()}`, title: scenario.event, parentView: scenario.parentView, tone: scenario.tone };
     setEvents((prev) => [event, ...prev].slice(0, 6));
     showToast({ title: scenario.event, description: scenario.parentView, tone: scenario.tone === "danger" ? "warning" : scenario.tone });
   }
 
   return (
-    <Card className="border-pine-100 bg-white">
+    <Card className="border-pine-100 bg-white" data-demo="guided-demo-card">
       <div className="grid gap-5 xl:grid-cols-[0.85fr_1.15fr]">
         <div>
           <div className="flex items-center gap-2 text-pine-900">
             <ShieldCheck className="h-5 w-5" />
-            <h2 className="text-lg font-semibold">Guided Client Demo</h2>
+            <h2 className="text-lg font-semibold">5-Minute School Demo</h2>
           </div>
-          <p className="mt-2 text-sm text-slate-600">A principal-ready walkthrough showing school operations and the matching parent experience.</p>
+          <p className="mt-2 text-sm text-slate-600">A polished sales walkthrough showing one school day moving from dashboard action to parent reassurance.</p>
           <div className="mt-4 rounded-2xl border border-slate-200 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-500">Current step</p>
             <p className="mt-1 text-xl font-semibold text-pine-900">{walkthrough[step]}</p>
@@ -67,7 +61,8 @@ export function GuidedDemo() {
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button onClick={startDemo} className="rounded-xl bg-pine-900 px-3 py-2 text-sm text-white">Start Guided Demo</button>
+            <button onClick={startLocalDemo} className="rounded-xl bg-pine-900 px-3 py-2 text-sm text-white">Start Guided Demo</button>
+            <button onClick={resetDemo} className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">Reset demo</button>
             <button onClick={() => setStep((current) => Math.min(current + 1, walkthrough.length - 1))} className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">Next step</button>
           </div>
         </div>

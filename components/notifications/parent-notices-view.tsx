@@ -47,7 +47,7 @@ export function ParentNoticesView() {
         <p className="mt-1 text-sm text-white/75">Updates from Hermanus Valley Academy</p>
       </div>
 
-      <Card>
+      <Card data-demo="parent-action-center">
         <h2 className="font-semibold text-pine-900">Action center</h2>
         <div className="mt-3 grid grid-cols-2 gap-2 text-sm md:grid-cols-3">
           <Action href="/parent/forms" icon={<Signature className="h-4 w-4" />} label="Sign form" />

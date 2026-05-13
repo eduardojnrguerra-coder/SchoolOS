@@ -137,22 +137,50 @@ NEXT_PUBLIC_ENABLE_DEMO_MODE=true
 2. Go to `/login`.
 3. Select `School Admin` under demo login.
 4. Open `/dashboard`.
-5. Click `Start Guided Demo`.
-6. Walk through the guided steps:
+5. Click `Start Guided Demo` in the `5-Minute School Demo` card.
+6. Use the guided overlay controls to move through the school-day story.
+7. Use `Reset demo` any time before a new client walkthrough.
 
-```text
-Dashboard overview
-Learner profile
-Attendance alert
-Notice creation
-Parent app notice
-Fee balance
-Consent form
-Transport update
-Aftercare pickup
-```
+### 5-Minute School Demo Flow
 
-7. Use the dashboard scenario buttons:
+The guided demo is a sales walkthrough that uses fictional demo data only and does not require Supabase.
+
+1. Show `Today's School Pulse` on `/dashboard`.
+2. Highlight the unconfirmed absence.
+3. Navigate to `/dashboard/attendance`.
+4. Mark a learner absent.
+5. Show the generated parent app notification preview.
+6. Navigate to the parent portal preview.
+7. Show the parent confirming the absence.
+8. Navigate to `/dashboard/notices`.
+9. Send an urgent notice to Grade 3 parents.
+10. Show read and acknowledgement tracking.
+11. Navigate to `/dashboard/consent-forms`.
+12. Create an outing consent form.
+13. Show the parent signing from the phone preview.
+14. Navigate to `/dashboard/fees`.
+15. Show an overdue fee account and reminder.
+16. Show a parent proof-of-payment upload scenario.
+17. Navigate to `/dashboard/transport`.
+18. Mark a route delayed.
+19. Show the parent transport timeline preview.
+20. Navigate to `/dashboard/aftercare`.
+21. Check a learner into aftercare.
+22. Show pickup/check-in confirmation.
+23. End with: `One school day. One system. Every parent informed.`
+
+### Client Demo Notes
+
+- The overlay highlights real UI sections with `data-demo` anchors.
+- Scenario buttons dispatch browser-only demo events and update local component state.
+- The demo temporarily allows a demo admin to preview `/parent` while the guided demo is active. This is a frontend demo convenience only.
+- Supabase RLS remains the required production security boundary.
+- No real parent messages, WhatsApp, SMS, payments, signatures, or learner data are sent or stored.
+- Use `Reset demo` before handing the laptop to another prospect.
+
+### Legacy Scenario Buttons
+
+The dashboard also includes quick scenario buttons for shorter demos:
 
 ```text
 Mark learner absent
@@ -163,10 +191,17 @@ Delay transport route
 Check learner into aftercare
 ```
 
-8. After each scenario, point out what the parent would see.
-9. Switch to the `Parent` demo login.
-10. Open `/parent` on a mobile-width browser or phone.
-11. Show notices, forms, fees, transport, documents, and messages.
+After each scenario, point out what the parent would see in the phone preview.
+
+### Parent Portal Standalone Demo
+
+If you want to show the parent portal outside the guided flow:
+
+1. Log out.
+2. Go to `/login`.
+3. Select `Parent` under demo login.
+4. Open `/parent` on a mobile-width browser or phone.
+5. Show notices, forms, fees, transport, documents, and messages.
 
 ## Manual Test Checklist
 

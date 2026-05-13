@@ -1,6 +1,7 @@
 "use client";
 
 import { CollectionProgressChart } from "@/components/finance/collection-chart";
+import { ParentAppPreview } from "@/components/parent/parent-app-preview";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -10,6 +11,7 @@ import {
   FinanceAuditEntry,
   buildFinanceAudit,
   buildManualPayment,
+  buildProofUpload,
   formatMoney,
   getCollectionChartData,
   getFeeRows,
@@ -18,7 +20,8 @@ import {
 } from "@/src/lib/finance";
 import { FeeAccount, Payment, ProofOfPayment } from "@/types/domain";
 import { Bell, Check, FileCheck2, Plus, Search, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { salesDemoActionEventName, SalesDemoActionPayload } from "@/lib/sales-demo";
+import { useEffect, useMemo, useState } from "react";
 
 export function AdminFeesView() {
   const [accounts, setAccounts] = useState<FeeAccount[]>(demoData.feeAccounts);
@@ -65,6 +68,39 @@ export function AdminFeesView() {
     setAuditLogs((prev) => [buildFinanceAudit("FEE_REMINDER_QUEUED", `Reminder queued for ${selectedRow.learnerName}`), ...prev]);
   }
 
+  useEffect(() => {
+    function onDemoAction(event: Event) {
+      const { type } = (event as CustomEvent<SalesDemoActionPayload>).detail ?? {};
+      if (type === "RESET_DEMO") {
+        setAccounts(demoData.feeAccounts);
+        setPayments(demoData.payments);
+        setProofs(demoData.proofsOfPayment);
+        setAuditLogs([]);
+        setReminderMessage("");
+        setSelectedAccountId(demoData.feeAccounts[0]?.id ?? "");
+        return;
+      }
+      if (type !== "SHOW_OVERDUE_FEE" && type !== "UPLOAD_PROOF_OF_PAYMENT") return;
+      const overdue = accounts.find((account) => account.overdueAmount > 0) ?? accounts[0];
+      if (!overdue) return;
+      setSelectedAccountId(overdue.id);
+      const row = rows.find((item) => item.account.id === overdue.id);
+      if (type === "SHOW_OVERDUE_FEE") {
+        setReminderMessage(`Payment reminder ready for ${row?.parentName ?? "the selected parent"}.`);
+        setAuditLogs((prev) => [buildFinanceAudit("DEMO_OVERDUE_ACCOUNT_SELECTED", `${row?.learnerName ?? "Learner"} selected for reminder preview`), ...prev]);
+      }
+      if (type === "UPLOAD_PROOF_OF_PAYMENT") {
+        const proof = buildProofUpload(overdue, "demo-parent-proof-of-payment.pdf");
+        setProofs((prev) => [proof, ...prev]);
+        setReminderMessage(`Parent proof uploaded for ${row?.learnerName ?? "the selected learner"} and queued for finance review.`);
+        setAuditLogs((prev) => [buildFinanceAudit("DEMO_PROOF_UPLOADED", `Proof uploaded for ${row?.learnerName ?? "learner"}`), ...prev]);
+      }
+    }
+
+    window.addEventListener(salesDemoActionEventName, onDemoAction);
+    return () => window.removeEventListener(salesDemoActionEventName, onDemoAction);
+  }, [accounts, rows]);
+
   return (
     <div className="space-y-5">
       <PageHeader title="Fees" subtitle="Track school fee balances, proof uploads, and payment follow-up." />
@@ -104,7 +140,12 @@ export function AdminFeesView() {
               </thead>
               <tbody>
                 {filteredRows.map((row) => (
-                  <tr key={row.account.id} onClick={() => setSelectedAccountId(row.account.id)} className="cursor-pointer border-b border-slate-100 hover:bg-slate-50">
+                  <tr
+                    key={row.account.id}
+                    data-demo={row.status === "Overdue" ? "overdue-fee-account" : undefined}
+                    onClick={() => setSelectedAccountId(row.account.id)}
+                    className="cursor-pointer border-b border-slate-100 hover:bg-slate-50"
+                  >
                     <td className="px-3 py-3 font-medium text-slate-900">{row.learnerName}</td>
                     <td className="px-3 py-3">{row.parentName}</td>
                     <td className="px-3 py-3">{formatMoney(row.monthlyFee)}</td>
@@ -142,7 +183,23 @@ export function AdminFeesView() {
             <DetailGrid row={selectedRow} payments={payments} proofs={proofs} />
           </Card>
 
-          <StatementPreview account={selectedRow.account} payments={payments} learnerName={selectedRow.learnerName} />
+          <div className="space-y-4">
+            <ParentAppPreview
+              action="FEE_REMINDER"
+              learnerName={selectedRow.learnerName}
+              title="Fee balance reminder"
+              message={`${selectedRow.learnerName} has a current school fee balance of ${formatMoney(selectedRow.balance)}. Please upload proof of payment or contact finance if you need help.`}
+              statusLabel={selectedRow.status}
+              statusTone={selectedRow.status === "Overdue" ? "danger" : selectedRow.status === "Outstanding" ? "warning" : "success"}
+              actionLabel="Upload proof"
+              meta={[
+                { label: "Balance", value: formatMoney(selectedRow.balance), tone: selectedRow.status === "Overdue" ? "danger" : "warning" },
+                { label: "Parent", value: selectedRow.parentName, tone: "info" }
+              ]}
+              footerNote="Finance can later connect this to PayFast, Yoco, Ozow, Peach Payments, or EFT proof workflows."
+            />
+            <StatementPreview account={selectedRow.account} payments={payments} learnerName={selectedRow.learnerName} />
+          </div>
         </div>
       )}
 

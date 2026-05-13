@@ -17,6 +17,7 @@ const items: Array<{ slug: string; label: string; roles: AppRole[] }> = [
   { slug: "incidents", label: "Incidents", roles: ["SCHOOL_ADMIN", "PRINCIPAL", "SUPER_ADMIN"] },
   { slug: "transport", label: "Transport", roles: ["SCHOOL_ADMIN", "PRINCIPAL", "SUPER_ADMIN", "TRANSPORT_MANAGER"] },
   { slug: "aftercare", label: "Aftercare", roles: ["SCHOOL_ADMIN", "PRINCIPAL", "SUPER_ADMIN", "AFTERCARE_STAFF"] },
+  { slug: "implementation", label: "Implementation", roles: ["SCHOOL_ADMIN", "PRINCIPAL", "SUPER_ADMIN"] },
   { slug: "settings", label: "Settings", roles: ["SCHOOL_ADMIN", "PRINCIPAL", "SUPER_ADMIN"] }
 ];
 

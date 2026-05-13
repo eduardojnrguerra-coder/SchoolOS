@@ -1,6 +1,7 @@
 "use client";
 
 import { NotificationCenter } from "@/components/notifications/notification-center";
+import { ParentAppPreview } from "@/components/parent/parent-app-preview";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -17,7 +18,8 @@ import {
 } from "@/src/lib/notifications";
 import { Notice } from "@/types/domain";
 import { CalendarClock, Paperclip, Send } from "lucide-react";
-import { useMemo, useState } from "react";
+import { salesDemoActionEventName, SalesDemoActionPayload } from "@/lib/sales-demo";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const channels: NoticeChannel[] = ["App notification", "Email", "WhatsApp placeholder", "SMS placeholder"];
 const priorities: NoticePriority[] = ["Normal", "Important", "Urgent"];
@@ -60,21 +62,56 @@ export function AdminNoticesView() {
     }));
   }
 
-  function sendNotice() {
-    if (!composer.title.trim() || !composer.body.trim() || composer.channels.length === 0) return;
-    const notice = createNoticeFromComposer(composer);
-    const deliveryRows = simulateNoticeDelivery(notice, composer);
+  const queueNotice = useCallback((nextComposer: NoticeComposerState) => {
+    if (!nextComposer.title.trim() || !nextComposer.body.trim() || nextComposer.channels.length === 0) return;
+    const notice = createNoticeFromComposer(nextComposer);
+    const deliveryRows = simulateNoticeDelivery(notice, nextComposer);
     setNotices((prev) => [notice, ...prev]);
     setDeliveries((prev) => [...deliveryRows, ...prev]);
-    setAuditLogs((prev) => [buildNoticeAuditLog(notice, composer), ...prev]);
+    setAuditLogs((prev) => [buildNoticeAuditLog(notice, nextComposer), ...prev]);
     setSentMessage("Notice queued in demo mode. No external messages were sent.");
+  }, []);
+
+  function sendNotice() {
+    queueNotice(composer);
   }
+
+  useEffect(() => {
+    function onDemoAction(event: Event) {
+      const { type } = (event as CustomEvent<SalesDemoActionPayload>).detail ?? {};
+      if (type === "RESET_DEMO") {
+        setNotices(demoData.notices);
+        setDeliveries([]);
+        setAuditLogs([]);
+        setSentMessage("");
+        setComposer(defaultNoticeComposer);
+        return;
+      }
+      if (type !== "SEND_URGENT_GRADE3_NOTICE") return;
+      const gradeThree = demoData.grades.find((grade) => grade.code === "3") ?? demoData.grades[0];
+      const nextComposer: NoticeComposerState = {
+        ...defaultNoticeComposer,
+        title: "Urgent Grade 3 pickup update",
+        body: "Grade 3 parents, please use the main gate for pickup today due to weather and traffic flow changes.",
+        audienceType: "Grade",
+        audienceTargetId: gradeThree?.id ?? "all",
+        channels: ["App notification", "Email"],
+        priority: "Urgent",
+        scheduledFor: new Date().toISOString().slice(0, 16)
+      };
+      setComposer(nextComposer);
+      queueNotice(nextComposer);
+    }
+
+    window.addEventListener(salesDemoActionEventName, onDemoAction);
+    return () => window.removeEventListener(salesDemoActionEventName, onDemoAction);
+  }, [queueNotice]);
 
   return (
     <div className="space-y-5">
       <PageHeader title="Notices" subtitle="Create, preview, send, and monitor school communications." />
       <div className="grid gap-4 xl:grid-cols-[1.25fr_0.9fr]">
-        <Card>
+        <Card data-demo="notice-composer">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-pine-900">Create Notice</h2>
             <StatusBadge label="Demo send" tone="info" />
@@ -126,7 +163,20 @@ export function AdminNoticesView() {
           </div>
         </Card>
 
-        <ParentPreview composer={composer} />
+        <ParentAppPreview
+          action="URGENT_NOTICE"
+          title={composer.title || "Notice title"}
+          message={composer.body || "Notice body will appear here."}
+          timestamp={composer.scheduledFor ? new Date(composer.scheduledFor).toISOString() : undefined}
+          statusLabel={composer.priority}
+          statusTone={composer.priority === "Urgent" ? "danger" : composer.priority === "Important" ? "warning" : "info"}
+          actionLabel="Acknowledge notice"
+          meta={[
+            { label: "Audience", value: composer.audienceType, tone: "info" },
+            { label: "Channels", value: `${composer.channels.length} selected`, tone: "success" },
+            ...(composer.attachmentName ? [{ label: "Attachment", value: "Included", tone: "warning" as const }] : [])
+          ]}
+        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
@@ -146,7 +196,9 @@ export function AdminNoticesView() {
             ))}
           </div>
         </Card>
-        <NotificationCenter deliveries={deliveries.length ? deliveries : []} />
+        <div data-demo="notice-tracking">
+          <NotificationCenter deliveries={deliveries.length ? deliveries : []} />
+        </div>
       </div>
 
       <Card>
@@ -165,27 +217,5 @@ export function AdminNoticesView() {
         )}
       </Card>
     </div>
-  );
-}
-
-function ParentPreview({ composer }: { composer: NoticeComposerState }) {
-  return (
-    <Card className="bg-slate-950 text-white">
-      <p className="text-xs uppercase tracking-wide text-white/60">Parent preview</p>
-      <div className="mt-4 rounded-2xl bg-white p-4 text-slate-900">
-        <div className="flex items-center justify-between">
-          <StatusBadge label={composer.priority} tone={composer.priority === "Urgent" ? "danger" : composer.priority === "Important" ? "warning" : "info"} />
-          <span className="text-xs text-slate-500">Hermanus Valley Academy</span>
-        </div>
-        <h3 className="mt-4 text-lg font-semibold text-pine-900">{composer.title || "Notice title"}</h3>
-        <p className="mt-2 text-sm text-slate-600">{composer.body || "Notice body will appear here."}</p>
-        {composer.attachmentName && (
-          <div className="mt-4 rounded-lg border border-slate-200 p-3 text-sm">
-            Attachment: {composer.attachmentName}
-          </div>
-        )}
-        <button className="mt-4 w-full rounded-xl bg-pine-900 px-4 py-2 text-sm text-white">Acknowledge</button>
-      </div>
-    </Card>
   );
 }

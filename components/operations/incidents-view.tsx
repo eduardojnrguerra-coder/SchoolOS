@@ -1,5 +1,6 @@
 "use client";
 
+import { ParentAppPreview } from "@/components/parent/parent-app-preview";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -72,10 +73,21 @@ export function IncidentsView() {
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={draft.followUpRequired} onChange={(e) => updateDraft({ followUpRequired: e.target.checked })} /> Follow-up required</label>
             <button onClick={logIncident} className="inline-flex w-fit items-center gap-2 rounded-xl bg-pine-900 px-3 py-2 text-sm text-white"><Plus className="h-4 w-4" /> Log incident</button>
           </div>
-          <div className="mt-4 rounded-xl border border-slate-200 p-3 text-sm">
-            <p className="font-medium text-slate-900">Parent notification preview</p>
-            <p className="mt-1 text-slate-600">{incidentParentPreview(draft)}</p>
-          </div>
+          <ParentAppPreview
+            className="mt-4"
+            action="INCIDENT_NOTIFICATION"
+            learnerName={learnerName(draft.learnerId)}
+            title="School care update"
+            message={incidentParentPreview(draft)}
+            statusLabel={draft.followUpRequired ? "Follow-up required" : "Parent-safe"}
+            statusTone={draft.followUpRequired ? "danger" : "warning"}
+            actionLabel="Contact school"
+            meta={[
+              { label: "Severity", value: draft.severity, tone: draft.severity === "high" ? "danger" : draft.severity === "medium" ? "warning" : "info" },
+              { label: "Parent notified", value: draft.parentNotified ? "Yes" : "Pending", tone: draft.parentNotified ? "success" : "warning" }
+            ]}
+            footerNote="Sensitive incident details remain restricted to authorized staff until explicitly marked parent-visible."
+          />
         </Card>
 
         <Card>

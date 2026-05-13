@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { ParentAppPreview } from "@/components/parent/parent-app-preview";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { demoData } from "@/demo-data";
 import {
@@ -22,7 +23,8 @@ import {
 } from "@/src/lib/consent";
 import { ConsentForm } from "@/types/domain";
 import { Bell, Download, Plus, Send } from "lucide-react";
-import { useMemo, useState } from "react";
+import { salesDemoActionEventName, SalesDemoActionPayload } from "@/lib/sales-demo";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const questionTypes: ConsentQuestionType[] = ["Short answer", "Yes/no", "Checkbox", "Multiple choice", "Emergency contact confirmation"];
 
@@ -59,15 +61,19 @@ export function AdminConsentView() {
     }));
   }
 
-  function createForm() {
-    const form = createConsentFormFromDraft(draft);
-    const targets = createSubmissionTargets(form.id, draft);
+  const createFormFromDraft = useCallback((nextDraft: ConsentFormDraft) => {
+    const form = createConsentFormFromDraft(nextDraft);
+    const targets = createSubmissionTargets(form.id, nextDraft);
     setForms((prev) => [form, ...prev]);
     setSubmissions((prev) => [...targets, ...prev]);
     setSelectedFormId(form.id);
     setAuditLogs((prev) => [buildConsentAudit("CONSENT_FORM_CREATED", `${form.title} sent to ${targets.length} recipients`), ...prev]);
     setShowCreate(false);
     setNotice("Consent form created and queued in demo mode.");
+  }, []);
+
+  function createForm() {
+    createFormFromDraft(draft);
   }
 
   function sendReminder() {
@@ -77,12 +83,45 @@ export function AdminConsentView() {
     setNotice(`Reminder queued for ${pending} unsigned submissions. No real message was sent.`);
   }
 
+  useEffect(() => {
+    function onDemoAction(event: Event) {
+      const { type } = (event as CustomEvent<SalesDemoActionPayload>).detail ?? {};
+      if (type === "RESET_DEMO") {
+        setForms(demoData.consentForms);
+        setSubmissions(getInitialConsentSubmissions(demoData.consentForms));
+        setSelectedFormId(demoData.consentForms[0]?.id ?? "");
+        setAuditLogs([]);
+        setNotice("");
+        setDraft(defaultConsentDraft);
+        return;
+      }
+      if (type !== "CREATE_OUTING_CONSENT_FORM") return;
+      const outingDraft: ConsentFormDraft = {
+        ...defaultConsentDraft,
+        title: "Grade 3 Nature Walk Consent",
+        description: "Permission request for the Grade 3 coastal nature walk and packed lunch outing.",
+        audience: "Grade",
+        dueDate: "2026-05-20",
+        requiresSignature: true,
+        questions: [
+          { id: "q_demo_1", label: "Do you give permission for your child to attend?", type: "Yes/no", required: true },
+          { id: "q_demo_2", label: "Please confirm emergency contact details are up to date.", type: "Emergency contact confirmation", required: true }
+        ]
+      };
+      setDraft(outingDraft);
+      createFormFromDraft(outingDraft);
+    }
+
+    window.addEventListener(salesDemoActionEventName, onDemoAction);
+    return () => window.removeEventListener(salesDemoActionEventName, onDemoAction);
+  }, [createFormFromDraft]);
+
   return (
     <div className="space-y-5">
       <PageHeader title="Digital Consent Forms" subtitle="Create forms, track signatures, and review submissions." />
 
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => setShowCreate(true)} className="inline-flex items-center gap-2 rounded-xl bg-pine-900 px-3 py-2 text-sm text-white">
+        <button data-demo="consent-create" onClick={() => setShowCreate(true)} className="inline-flex items-center gap-2 rounded-xl bg-pine-900 px-3 py-2 text-sm text-white">
           <Plus className="h-4 w-4" />
           Create form
         </button>
@@ -105,7 +144,7 @@ export function AdminConsentView() {
         <Kpi label="Overdue" value={counts.overdue} tone="danger" />
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-4 xl:grid-cols-[0.85fr_1fr_0.85fr]">
         <Card>
           <h2 className="mb-3 text-lg font-semibold text-pine-900">Forms</h2>
           <div className="space-y-2">
@@ -152,6 +191,22 @@ export function AdminConsentView() {
             </div>
           )}
         </Card>
+
+        <ParentAppPreview
+          action="CONSENT_FORM_REQUEST"
+          learnerName={selectedSubmission ? getLearnerName(selectedSubmission.learnerId) : "Selected learner"}
+          title={selectedForm ? `Consent due: ${selectedForm.title}` : "Consent form request"}
+          message={selectedForm ? selectedForm.description : "Please review and sign the school consent form before the due date."}
+          timestamp={selectedForm?.openAt}
+          statusLabel={selectedSubmission?.status ?? "Signature needed"}
+          statusTone={selectedSubmission?.status === "Signed" ? "success" : selectedSubmission?.status === "Overdue" ? "danger" : "warning"}
+          actionLabel={selectedSubmission?.status === "Signed" ? "View signed copy" : "Sign form"}
+          meta={[
+            { label: "Due date", value: selectedForm?.closeAt.slice(0, 10) ?? "Pending", tone: "warning" },
+            { label: "Signature", value: selectedForm?.requiresSignature ? "Required" : "Not required", tone: selectedForm?.requiresSignature ? "warning" : "info" }
+          ]}
+          footerNote="Legal and indemnity wording is placeholder/demo text only."
+        />
       </div>
 
       <Card>

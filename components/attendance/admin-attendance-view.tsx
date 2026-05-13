@@ -1,6 +1,7 @@
 "use client";
 
 import { RegisterEditor, RegisterRow } from "@/components/attendance/register-editor";
+import { ParentAppPreview } from "@/components/parent/parent-app-preview";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
@@ -13,7 +14,8 @@ import {
   createInitialRegister,
   getLatestAttendanceDate
 } from "@/lib/attendance";
-import { useMemo, useState } from "react";
+import { salesDemoActionEventName, SalesDemoActionPayload } from "@/lib/sales-demo";
+import { useEffect, useMemo, useState } from "react";
 
 type AuditItem = { id: string; action: string; detail: string; at: string };
 
@@ -44,6 +46,7 @@ export function AdminAttendanceView() {
   ]);
   const [auditTrail, setAuditTrail] = useState<AuditItem[]>([]);
   const [savedMessage, setSavedMessage] = useState("");
+  const [selectedPreviewLearnerId, setSelectedPreviewLearnerId] = useState("");
 
   function registerKey(date: string, classId: string) {
     return `${date}:${classId}`;
@@ -96,6 +99,45 @@ export function AdminAttendanceView() {
     setSavedMessage(`Saved ${registerRows.length} attendance rows for ${className}.`);
   }
 
+  useEffect(() => {
+    function onDemoAction(event: Event) {
+      const { type } = (event as CustomEvent<SalesDemoActionPayload>).detail ?? {};
+      if (type === "RESET_DEMO") {
+        setRegisterRows(createInitialRegister(selectedDate, selectedClassId));
+        setSavedMessage("");
+        setAuditTrail([]);
+        return;
+      }
+      if (type !== "MARK_LEARNER_ABSENT") return;
+      const target = registerRows[0];
+      if (!target) return;
+      const now = new Date().toISOString();
+      const message = buildAlertForStatus({ learnerName: target.learnerName, status: "ABSENT", date: selectedDate });
+      setRegisterRows((prev) =>
+        prev.map((row, index) => index === 0 ? { ...row, status: "ABSENT", note: "Demo absence: awaiting parent confirmation." } : row)
+      );
+      setSelectedPreviewLearnerId(target.learnerId);
+      setAlertQueue((prev) => [{
+        id: `demo_absent_${Date.now()}`,
+        learnerId: target.learnerId,
+        learnerName: target.learnerName,
+        status: "Action required" as const,
+        message,
+        createdAt: now
+      }, ...prev].slice(0, 20));
+      setAuditTrail((prev) => [{
+        id: `audit_demo_${Date.now()}`,
+        action: "DEMO_ATTENDANCE_ABSENCE_MARKED",
+        detail: `${target.learnerName} marked absent for the 5-minute school demo.`,
+        at: now
+      }, ...prev].slice(0, 12));
+      setSavedMessage(`${target.learnerName} marked absent and parent alert preview generated.`);
+    }
+
+    window.addEventListener(salesDemoActionEventName, onDemoAction);
+    return () => window.removeEventListener(salesDemoActionEventName, onDemoAction);
+  }, [registerRows, selectedClassId, selectedDate]);
+
   const dailySummary = useMemo(() => {
     const total = registerRows.length;
     const present = registerRows.filter((r) => r.status === "PRESENT").length;
@@ -109,6 +151,8 @@ export function AdminAttendanceView() {
 
   const absentLearners = registerRows.filter((r) => r.status === "ABSENT");
   const lateLearners = registerRows.filter((r) => r.status === "LATE");
+  const alertPreviewRows = registerRows.filter((r) => r.status === "ABSENT" || r.status === "LATE");
+  const selectedPreviewRow = alertPreviewRows.find((row) => row.learnerId === selectedPreviewLearnerId) ?? alertPreviewRows[0];
 
   return (
     <div className="space-y-5">
@@ -131,7 +175,9 @@ export function AdminAttendanceView() {
         </div>
       </Card>
 
-      <RegisterEditor rows={registerRows} onChangeRow={onChangeRow} />
+      <div data-demo="attendance-register">
+        <RegisterEditor rows={registerRows} onChangeRow={onChangeRow} />
+      </div>
 
       <section className="grid gap-4 xl:grid-cols-3">
         <Card>
@@ -154,19 +200,38 @@ export function AdminAttendanceView() {
         </Card>
         <Card>
           <h3 className="text-lg font-semibold text-pine-900">Parent Alert Preview</h3>
-          <div className="mt-3 space-y-2">
-            {registerRows
-              .filter((r) => r.status === "ABSENT" || r.status === "LATE")
-              .map((row) => (
-                <div key={row.learnerId} className="rounded-xl border border-slate-200 p-3 text-sm">
-                  <p className="font-medium text-slate-900">{row.learnerName}</p>
-                  <p className="mt-1 text-slate-600">{buildAlertForStatus({ learnerName: row.learnerName, status: row.status, date: selectedDate })}</p>
-                </div>
-              ))}
-            {!registerRows.some((r) => r.status === "ABSENT" || r.status === "LATE") && (
+          {selectedPreviewRow ? (
+            <div className="mt-3 space-y-3">
+              <div className="flex flex-wrap gap-2">
+                {alertPreviewRows.map((row) => (
+                  <button
+                    key={row.learnerId}
+                    onClick={() => setSelectedPreviewLearnerId(row.learnerId)}
+                    className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      selectedPreviewRow.learnerId === row.learnerId ? "border-pine-300 bg-pine-50 text-pine-900" : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    }`}
+                  >
+                    {row.learnerName}
+                  </button>
+                ))}
+              </div>
+              <ParentAppPreview
+                action={selectedPreviewRow.status === "LATE" ? "ATTENDANCE_LATE" : "ABSENCE_ALERT"}
+                learnerName={selectedPreviewRow.learnerName}
+                title={selectedPreviewRow.status === "LATE" ? "Late arrival recorded" : "Absence confirmation needed"}
+                message={buildAlertForStatus({ learnerName: selectedPreviewRow.learnerName, status: selectedPreviewRow.status, date: selectedDate })}
+                timestamp={`${selectedDate}T${selectedPreviewRow.status === "LATE" ? "08:37" : "08:22"}:00+02:00`}
+                meta={[
+                  { label: "Register", value: selectedPreviewRow.status.replace("_", " "), tone: selectedPreviewRow.status === "ABSENT" ? "danger" : "warning" },
+                  { label: "Date", value: selectedDate, tone: "info" }
+                ]}
+              />
+            </div>
+          ) : (
+            <div className="mt-3">
               <EmptyState title="No alerts to preview" description="Alerts appear when learners are marked absent or late." />
-            )}
-          </div>
+            </div>
+          )}
         </Card>
       </section>
 

@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { createDemoNotificationQueue, markAsRead } from "@/src/lib/notifications/notificationService";
 import { QueuedNotification } from "@/src/lib/notifications/types";
+import { salesDemoActionEventName, SalesDemoActionPayload } from "@/lib/sales-demo";
 import { Bell, CheckCircle2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type InboxFilter = "All" | "Unread" | "Action required";
 
@@ -24,6 +25,7 @@ function label(status: QueuedNotification["status"]) {
 export function ParentNotificationInbox() {
   const [queue, setQueue] = useState<QueuedNotification[]>(createDemoNotificationQueue());
   const [filter, setFilter] = useState<InboxFilter>("All");
+  const [confirmationMessage, setConfirmationMessage] = useState("");
 
   const filtered = useMemo(() => {
     return queue.filter((notification) => {
@@ -37,8 +39,33 @@ export function ParentNotificationInbox() {
     setQueue((prev) => markAsRead(notificationId, prev));
   }
 
+  useEffect(() => {
+    function onDemoAction(event: Event) {
+      const { type } = (event as CustomEvent<SalesDemoActionPayload>).detail ?? {};
+      if (type === "RESET_DEMO") {
+        setQueue(createDemoNotificationQueue());
+        setFilter("All");
+        setConfirmationMessage("");
+        return;
+      }
+      if (type !== "PARENT_CONFIRM_ABSENCE") return;
+      setFilter("All");
+      setQueue((prev) =>
+        prev.map((notification) =>
+          notification.type === "ATTENDANCE_ABSENT"
+            ? { ...notification, status: "READ", actionRequired: false, readAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+            : notification
+        )
+      );
+      setConfirmationMessage("Absence confirmation submitted to Hermanus Valley Academy.");
+    }
+
+    window.addEventListener(salesDemoActionEventName, onDemoAction);
+    return () => window.removeEventListener(salesDemoActionEventName, onDemoAction);
+  }, []);
+
   return (
-    <Card>
+    <Card data-demo="parent-notification-inbox">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Bell className="h-5 w-5 text-pine-800" />
@@ -46,6 +73,11 @@ export function ParentNotificationInbox() {
         </div>
         <StatusBadge label={`${queue.filter((item) => item.status !== "READ").length} unread`} tone="warning" />
       </div>
+      {confirmationMessage && (
+        <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800">
+          {confirmationMessage}
+        </div>
+      )}
       <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
         {filters.map((item) => (
           <button

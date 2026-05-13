@@ -1,5 +1,6 @@
 import "./globals.css";
 import { AuthProvider } from "@/components/auth/auth-provider";
+import { FiveMinuteSchoolDemoProvider } from "@/components/demo/five-minute-school-demo";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import type { Metadata, Viewport } from "next";
 
@@ -55,7 +56,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body>
         <ToastProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <FiveMinuteSchoolDemoProvider>{children}</FiveMinuteSchoolDemoProvider>
+          </AuthProvider>
         </ToastProvider>
       </body>
     </html>
