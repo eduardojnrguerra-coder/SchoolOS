@@ -59,6 +59,7 @@ type PreviewConfig = {
   statusLabel: string;
   statusTone: BadgeTone;
   actionLabel: string;
+  deliveryState: string;
   icon: LucideIcon;
   accent: keyof typeof accentClasses;
   timestamp: string;
@@ -95,6 +96,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Action required",
     statusTone: "danger",
     actionLabel: "Confirm absence",
+    deliveryState: "Unread | parent action required",
     icon: AlertTriangle,
     accent: "rose",
     timestamp: "2026-05-07T08:22:00+02:00"
@@ -106,6 +108,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Delivered",
     statusTone: "warning",
     actionLabel: "View register note",
+    deliveryState: "Delivered | not yet opened",
     icon: Clock3,
     accent: "amber",
     timestamp: "2026-05-07T08:37:00+02:00"
@@ -117,6 +120,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Urgent",
     statusTone: "danger",
     actionLabel: "Acknowledge notice",
+    deliveryState: "Read tracking enabled",
     icon: BellRing,
     accent: "rose",
     timestamp: "2026-05-07T09:05:00+02:00"
@@ -128,6 +132,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Reminder",
     statusTone: "warning",
     actionLabel: "Upload proof",
+    deliveryState: "Delivered | proof pending",
     icon: WalletCards,
     accent: "amber",
     timestamp: "2026-05-07T10:10:00+02:00"
@@ -139,6 +144,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Signature needed",
     statusTone: "warning",
     actionLabel: "Sign form",
+    deliveryState: "Opened | signature pending",
     icon: FileSignature,
     accent: "sky",
     timestamp: "2026-05-07T11:30:00+02:00"
@@ -150,6 +156,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Delayed",
     statusTone: "warning",
     actionLabel: "View transport",
+    deliveryState: "Sent | live route update",
     icon: Bus,
     accent: "amber",
     timestamp: "2026-05-07T14:18:00+02:00"
@@ -161,6 +168,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Confirmed",
     statusTone: "success",
     actionLabel: "View timeline",
+    deliveryState: "Read | timeline updated",
     icon: Bus,
     accent: "emerald",
     timestamp: "2026-05-07T14:42:00+02:00"
@@ -172,6 +180,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Updated",
     statusTone: "success",
     actionLabel: "View aftercare",
+    deliveryState: "Read | safety update visible",
     icon: HeartHandshake,
     accent: "emerald",
     timestamp: "2026-05-07T14:25:00+02:00"
@@ -183,6 +192,7 @@ const actionConfig: Record<ParentAppPreviewAction, PreviewConfig> = {
     statusLabel: "Staff follow-up",
     statusTone: "danger",
     actionLabel: "Contact school",
+    deliveryState: "Restricted | sensitive detail hidden",
     icon: ShieldAlert,
     accent: "rose",
     timestamp: "2026-05-07T12:05:00+02:00"
@@ -278,6 +288,9 @@ export function ParentAppPreview({
                   <StatusBadge label={previewStatus} tone={previewStatusTone} />
                   <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/80">
                     {formatTime(previewTimestamp)} today
+                  </span>
+                  <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/80">
+                    {config.deliveryState}
                   </span>
                 </div>
               </div>

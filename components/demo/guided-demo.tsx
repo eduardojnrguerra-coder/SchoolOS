@@ -61,7 +61,7 @@ export function GuidedDemo() {
             </div>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button onClick={startLocalDemo} className="rounded-xl bg-pine-900 px-3 py-2 text-sm text-white">Start Guided Demo</button>
+            <button onClick={startLocalDemo} className="rounded-xl bg-pine-900 px-3 py-2 text-sm text-white">Start 5-Minute Demo</button>
             <button onClick={resetDemo} className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">Reset demo</button>
             <button onClick={() => setStep((current) => Math.min(current + 1, walkthrough.length - 1))} className="rounded-xl border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50">Next step</button>
           </div>

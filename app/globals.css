@@ -33,6 +33,12 @@ body {
   .landing-float {
     animation: landing-float 6s ease-in-out infinite;
   }
+
+  @keyframes deco-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-8px) rotate(1.5deg); }
+    66% { transform: translateY(-4px) rotate(-1deg); }
+  }
 }
 
 @keyframes landing-reveal {
