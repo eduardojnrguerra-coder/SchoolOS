@@ -120,7 +120,7 @@ export default function HomePage() {
 function HeroSection() {
   return (
     <section className="relative isolate min-h-screen overflow-hidden px-4 py-5 md:px-8">
-      <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_18%_16%,rgba(45,212,191,0.22),transparent_32%),radial-gradient(circle_at_88%_12%,rgba(242,201,76,0.22),transparent_28%),linear-gradient(180deg,#07111f_0%,#10243f_58%,#f7f4ee_58%,#f7f4ee_100%)]" />
+      <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_18%_16%,rgba(45,212,191,0.22),transparent_32%),radial-gradient(circle_at_88%_12%,rgba(242,201,76,0.22),transparent_28%),linear-gradient(180deg,#07111f_0%,#10243f_72%,#111c34_100%)]" />
       <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
         <BellRing className="absolute left-[6%] top-[18%] hidden h-5 w-5 text-white/10 animate-[deco-float_9s_ease-in-out_infinite] lg:block" />
         <ClipboardCheck className="absolute right-[7%] top-[20%] hidden h-6 w-6 text-emerald-100/15 animate-[deco-float_10s_ease-in-out_infinite_800ms] lg:block" />
@@ -158,17 +158,17 @@ function HeroSection() {
               Pine X School OS helps schools, ECD centres, aftercare teams, and transport operators manage attendance, notices, fees, consent forms, documents, transport, and parent updates from one connected system.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/dashboard" className="rounded-full bg-amber-300 px-6 py-3 text-center text-sm font-bold text-pine-900 shadow-2xl shadow-amber-300/20 transition hover:-translate-y-0.5 hover:bg-amber-200">
+              <Link href="/demo/school" className="rounded-full bg-amber-300 px-6 py-3 text-center text-sm font-bold text-pine-900 shadow-2xl shadow-amber-300/20 transition hover:-translate-y-0.5 hover:bg-amber-200">
                 View School Demo
               </Link>
-              <Link href="/parent" className="rounded-full border border-white/25 bg-white/10 px-6 py-3 text-center text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">
+              <Link href="/demo/parent" className="rounded-full border border-white/25 bg-white/10 px-6 py-3 text-center text-sm font-bold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20">
                 View Parent App
               </Link>
               <Link href="mailto:hello@pine-x.local?subject=Book%20a%20Pine%20X%20School%20OS%20demo" className="rounded-full border border-white/25 px-6 py-3 text-center text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10">
                 Book a Demo
               </Link>
             </div>
-            <p className="mt-4 text-xs text-white/55">Demo mode works without Supabase. Use the demo login buttons to explore role-based flows.</p>
+            <p className="mt-4 text-xs text-white/60">Demo mode opens instantly without Supabase. Real staff login remains available separately.</p>
           </div>
 
           <HeroVisual />
@@ -388,8 +388,8 @@ function FinalCtaSection() {
           Walk through the dashboard, parent app, attendance alerts, digital consent, fee tracking, transport, aftercare, and privacy-aware settings using realistic demo data.
         </p>
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/dashboard" className="rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-pine-900 transition hover:-translate-y-0.5 hover:bg-amber-200">View Demo</Link>
-          <Link href="/parent" className="rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/20">View Parent App</Link>
+          <Link href="/demo/school" className="rounded-full bg-amber-300 px-6 py-3 text-sm font-bold text-pine-900 transition hover:-translate-y-0.5 hover:bg-amber-200">View Demo</Link>
+          <Link href="/demo/parent" className="rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/20">View Parent App</Link>
           <Link href="mailto:hello@pine-x.local?subject=Book%20a%20Pine%20X%20School%20OS%20demo" className="rounded-full border border-white/20 px-6 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-white/10">Book Demo</Link>
         </div>
       </div>
